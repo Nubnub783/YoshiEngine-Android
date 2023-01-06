@@ -1,0 +1,77 @@
+# Actions를 시작하는 데 도움이 되는 기본 워크플로입니다.
+
+이름 : 안드로이드 빌드 CI
+
+# 워크플로가 실행되는 시기를 제어합니다.
+on : [푸시, 풀_요청, 워크플로_디스패치]
+
+# 워크플로 실행은 순차적으로 또는 병렬로 실행할 수 있는 하나 이상의 작업으로 구성됩니다.
+작업 :
+  # 이 워크플로에는 "빌드"라는 단일 작업이 포함되어 있습니다.
+  빌드 :
+    # 작업이 실행될 러너의 유형
+    실행 : 우분투-최신
+    
+    # 단계는 작업의 일부로 실행될 일련의 작업을 나타냅니다.
+    단계 :
+      # 작업이 액세스할 수 있도록 $GITHUB_WORKSPACE 아래의 리포지토리를 체크아웃합니다.
+      - 용도 : actions/checkout@v2
+      - 용도 : krdlab/setup-haxe@v1
+        와 :
+          haxe 버전 : 4.2.3
+          
+      - 이름 : 캐시 haxelib 경로
+        용도 : action/cache@v2
+        와 :
+          경로 : |
+            %HAXELIB_ROOT%
+          키 : ${{ runner.os }}-안드로이드
+          
+      - name : Android SDK 도구 설정
+        용도 : android-actions/setup-android@v2.0.2
+        
+      - 이름 : Java JDK 설정
+        용도 : actions/setup-java@v2.3.1
+        와 :
+          distribution : ' zulu '  # 사용 가능한 옵션은 '지원되는 배포'를 참조하세요.
+          자바 버전 : ' 11 '
+        
+      - 용도 : nttld/setup-ndk@v1
+        와 :
+          ndk 버전 : r15c
+
+      # 러너 쉘을 사용하여 일련의 명령 실행
+      - 이름 : 스크립트 실행줄 ㅋㅋ
+        실행 : |
+          mkdir -p "%HAXELIB_ROOT%"
+          haxelib 설정 "%HAXELIB_ROOT%"
+          haxelib 설치 라임 7.9.0 --quiet
+          haxelib 설치 openfl --quiet
+          haxelib 설치 flixel 4.9.0 --quiet
+          haxelib 설치 hxcpp --quiet
+          haxelib 설치 akifox-asynchttp --quiet
+          haxelib 실행 라임 설정
+          haxelib 실행 라임 구성 ANDROID_SDK $ANDROID_SDK_ROOT
+          haxelib 실행 라임 구성 ANDROID_NDK_ROOT $ANDROID_NDK_ROOT
+          haxelib 실행 라임 구성 JAVA_HOME $JAVA_HOME
+          haxelib 실행 라임 구성 ANDROID_SETUP true
+          haxelib 설치 flixel-tools --quiet
+          haxelib 설치 flixel-ui --quiet
+          haxelib 설치 flixel-addons 2.10.0 --quiet
+          haxelib 설치 hscript --quiet
+          haxelib 자식 팩스 https://github.com/uhrobots/faxe --quiet
+          haxelib 자식 폴리모드 https://github.com/MasterEric/polymod.git --quiet
+          haxelib 자식 discord_rpc https://github.com/Aidan63/linc_discord-rpc --quiet
+          haxelib git extension-webm https://github.com/Sirox228/extension-webm --quiet
+          haxelib 자식 linc_luajit https://github.com/Daninnocent/linc_luajit.git --quiet
+          haxelib 자식 AndroidTools https://github.com/jigsaw-4277821/AndroidTools.git --quiet
+          haxelib 자식 haxe-strings https://github.com/vegardit/haxe-strings.git --quiet
+          haxelib 설치 작동
+          haxelib 목록
+          haxelib 실행 라임 빌드 안드로이드
+          
+      - 용도 : actions/upload-artifact@v2
+        와 :
+          이름 : 안드로이드 빌드
+          경로 : export/release/android/bin/app/build/outputs/apk/debug
+
